@@ -1,3 +1,5 @@
+import json
+import time
 from datetime import datetime, timedelta
 import os
 
@@ -26,17 +28,40 @@ def traffic_snapshot():
     return requests.post(url, data, headers=headers).json()
 
 
-def traffic(segment_id):
+@memory.cache
+def traffic(segment_id, start, end):
     url = "https://telraam-api.net/v1/reports/traffic"
-    now = datetime.now()
-    end = now - timedelta(days=now.weekday())
-    start = end - timedelta(weeks=11)
-
     data = {"level": "segments",
             "format": "per-hour",
-            "id": segment_id,
-            "time_start": start,
-            "time_end": end
+            "id": str(segment_id),
+            "time_start": str(start),
+            "time_end": str(end)
             }
-    print(data)
-    return requests.post(url, data, headers=headers).json()
+    return requests.post(url, data=str(data), headers=headers).json()
+
+
+def traffic_last_3_months(segment_id):
+    now = datetime.now()
+    end = now - timedelta(days=now.weekday())
+    end = end.replace(hour=0, minute=0, second=0, microsecond=0)
+    start = end - timedelta(weeks=11)
+    print(segment_id, start, end)
+    return traffic(segment_id, start, end)
+
+
+if __name__ == '__main__':
+    segments = all_segments()
+    with open(os.path.join('data', 'segments.json'), 'w') as f:
+        json.dump(segments, f, indent=2)
+    now = datetime.now()
+    current_week = now - timedelta(days=now.weekday())
+    w = os.path.join('data', current_week.strftime('%Y-%m-%d'))
+    for segment in segments['features']:
+        s_id = segment['properties']['oidn']
+        data = traffic_last_3_months(s_id)
+        os.makedirs(w, exist_ok=True)
+        filepath = os.path.join(w, f"{s_id}.json")
+        print(filepath)
+        with open(filepath, 'w') as f:
+            json.dump(data, f, indent=2)
+        time.sleep(1)

@@ -1,2 +1,7 @@
 joblib
 requests
+pyproj
+pyrosm
+cython
+spatialite
+
