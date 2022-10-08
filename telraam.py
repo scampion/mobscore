@@ -58,10 +58,20 @@ if __name__ == '__main__':
     w = os.path.join('data', current_week.strftime('%Y-%m-%d'))
     for segment in segments['features']:
         s_id = segment['properties']['oidn']
-        data = traffic_last_3_months(s_id)
         os.makedirs(w, exist_ok=True)
         filepath = os.path.join(w, f"{s_id}.json")
-        print(filepath)
-        with open(filepath, 'w') as f:
-            json.dump(data, f, indent=2)
-        time.sleep(1)
+        if os.path.exists(filepath):
+            continue
+        else:
+            data = traffic_last_3_months(s_id)
+            print(filepath, len(data))
+            if data['message'] == "Limit Exceeded":
+                print("Limit Exceeded")
+                break
+            elif data['message'] == "ok":
+                with open(filepath, 'w') as f:
+                    json.dump(data, f, indent=2)
+            else:
+                print("Unknown error", data)
+                break
+            time.sleep(3)

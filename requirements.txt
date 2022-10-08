@@ -1,7 +1,8 @@
 joblib
 requests
 pyproj
-pyrosm
+#pyrosm
 cython
 spatialite
-
+python-prtree
+scikit-learn
